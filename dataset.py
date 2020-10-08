@@ -26,7 +26,7 @@ for i in range(num_of_shapes):
         start_idx_z = int(torch.randint(2, num_of_cells-9, (1,)))
         end_idx_z = start_idx_z+9
 
-        closed_shape = torch.load('HighResShapes_9_9_9/{}_shape.pt'.format(i)) #36 cells- 13-21
+        closed_shape = torch.load('HighResShapes_9_9_9/{}_shape.pt'.format(i)) 
         shape[j, start_idx_x:end_idx_x, start_idx_y:end_idx_y, start_idx_z:end_idx_z] = closed_shape[j]
 
         shape_2d[j] = torch.max(shape[j], dim=0).values
