@@ -1,11 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import complex_shapes
+
 import utils
-from criterion import EV_Loss, Dist_Loss, Relative_Dist_Loss, Shape_Reconstruction_Loss, EV_Reconstruction_Loss, Explode_Loss
+
+from criterion import Dist_Loss, EV_Reconstruction_Loss, Explode_Loss
 from dataset import train_loader, test_loader, num_of_shapes, num_of_parts, num_of_cells
 import numpy as np
-
 
 class ReconstructNet(nn.Module):
     """
@@ -109,8 +111,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = ReconstructNet()
 
 model = model.to(device)
-loss_fn = EV_Loss()
-loss_fn = loss_fn.to(device)
 
 criterion = Explode_Loss()
 optimiser = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -210,16 +210,6 @@ np.savez('loss_history.npz', train_loss=train_loss_values, loss1=loss1_values, l
 utils.print_graphs.print_loss6(num_epochs)
 
 
-torch.save({
-            'epoch': t,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimiser.state_dict(),
-            'loss': loss
-            }, "ReconstructNet_reg.pth")
-
-
-
-
 ########################################################################################################################
 #                                                     Test Model                                                       #
 ########################################################################################################################
@@ -234,7 +224,6 @@ test_loss_values = []
 model.eval()
 for i, data in enumerate(test_loader, 0):
     X_train = data.squeeze(0)
-    render = False
 
     # Create 3D Exploded View from the original shape
     input = X_train
@@ -245,6 +234,13 @@ for i, data in enumerate(test_loader, 0):
     parts = utils.center_shape_parts(input)
 
     voxel_ev, trans_vecs = model(ev_image, parts)
+
+    reconst_ev = voxel_ev * (voxel_ev >= 0.5)
+    utils.save_as_rgb.save(ev_image)
+    utils.render.render_shapes(input, reconst_ev, False)
+
+    loss, loss1, loss2, loss3, loss4, loss5, loss6 = criterion(X_train, voxel_ev)
+
     print("Test shape #", i, "Loss: ", loss.item())
 
 

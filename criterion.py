@@ -1,7 +1,6 @@
 
 import torch
 import torch.nn as nn
-from utils import calc_dis_angles, calc_shape_center
 from dataset import num_of_parts, num_of_cells
 import math
 
