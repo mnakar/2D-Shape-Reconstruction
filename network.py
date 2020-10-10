@@ -64,6 +64,7 @@ class ReconstructNet(nn.Module):
 
         xs = xs.view(1, 20 * 2 * 2)
         out = self.fc_loc(xs).view(-1, 2)
+        out = torch.cat([out[:, 1].view(-1,1), out[:, 0].view(-1,1)], dim=1) #Flip (y,x) to (x,y) for affine grid
 
         trans_vecs = torch.zeros(num_of_parts, 2)
 
