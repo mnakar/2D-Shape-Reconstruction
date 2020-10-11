@@ -132,8 +132,6 @@ for s in range(num_of_shapes):
 
     torch.save(s_voxel, 'HighResShapes_9_9_9/{}_shape.pt'.format(s))
 
-    #db_utils.render.render_shape(parts)
-
 
 
 

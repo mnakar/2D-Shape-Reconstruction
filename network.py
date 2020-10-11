@@ -121,7 +121,7 @@ optimiser = torch.optim.Adam(model.parameters(), lr=0.001)
 ########################################################################################################################
 
 
-num_epochs = 200
+num_epochs = 1000
 
 train_loss_values = []
 loss1_values = []
