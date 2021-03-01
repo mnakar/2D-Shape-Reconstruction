@@ -39,6 +39,7 @@ class Render:
             name1 = 'Results/test_{}_org_shape.png'.format(self.counter)
             name5 = 'Results/test_{}_reconstructed_EV.png'.format(self.counter)
 
+
         self.counter += 1
 
         # Render original shape:
@@ -102,10 +103,12 @@ render = Render()
 
 
 class SaveRGB():
-    def __init__(self):
+    def __init__(self, img_name):
         self.counter = 0
+        self.img_name = img_name
 
-    def save(self, shape_pixel):
+
+    def save(self, shape_pixel, is_train=True):
         Colors = {0: [255, 255, 255],  # White
                   1: [255, 0, 0],  # Red
                   2: [0, 0, 255],  # Blue
@@ -130,11 +133,16 @@ class SaveRGB():
             for j in range(rgb_image.shape[1]):
                 scaled_image[i * scale:(i + 1) * scale, j * scale:(j + 1) * scale] = rgb_image[i, j]
 
-        name = 'Results/{}_2D_ev.png'.format(self.counter)
+        if is_train:
+            name = 'Results/{}_2D_ev_{}.png'.format(self.counter, self.img_name)
+        else:
+            name = 'Results/test_{}_2D_ev_{}.png'.format(self.counter, self.img_name)
+
         plt.imsave(name, scaled_image)
         self.counter = (self.counter+1)%num_of_shapes
 
-save_as_rgb = SaveRGB()
+save_as_rgb_org = SaveRGB("org")
+save_as_rgb_rec = SaveRGB("rec")
 ########################################################################################################################
 #                                                Print Graphs Class                                                    #
 ########################################################################################################################
@@ -216,6 +224,7 @@ def center_shape_parts(shape_voxel):
         part = shape_voxel[i]
         part_indices = part.nonzero()
 
+        # For each part, find its bbox center
         max_vals = torch.max(part_indices, dim=0)
         min_vals = torch.min(part_indices, dim=0)
         max_x = max_vals.values[1]
@@ -229,3 +238,65 @@ def center_shape_parts(shape_voxel):
         parts[i][part_indices[:, 0], part_indices[:, 1]] = 1.0
 
     return parts
+
+
+
+def calc_shape_center(shape):
+    """
+    :param shape: voxel shape of size num_of_parts*num_of_cells*num_of_cells
+    :return: center coords of the voxel shape parts
+    For now simple bbox calculation
+    """
+    num_of_parts = shape.shape[0]
+    centers = torch.zeros(num_of_parts, 2).to(device)
+    '''
+    for p in range(shape.shape[0]):
+        min_z = min_y = min_x = 0.0
+        max_z = max_y = max_x = 0.0
+
+        for i in range(shape.shape[1]):
+            for j in range(shape.shape[2]):
+                for k in range(shape.shape[3]):
+                    part = shape[p]
+                    if part[i, j, k] >= 0.5:
+                        max_z = torch.max(torch.tensor([max_z, i]))
+                        max_y = torch.max(torch.tensor([max_y, j]))
+                        max_x = torch.max(torch.tensor([max_x, k]))
+                        min_z = torch.min(torch.tensor([min_z, i]))
+                        min_y = torch.min(torch.tensor([min_y, j]))
+                        min_x = torch.min(torch.tensor([min_x, k]))
+
+        centers[p] = torch.tensor([(max_z + min_z)/2.0, (max_y + min_y)/2.0, (max_x + min_x)/2.0])
+    '''
+
+
+
+    # Create  tensor of size 2 x num_of_cells x num_of_cells representing part coordinates
+    arange = torch.arange(num_of_cells).to(device)
+    vec1 = arange.view(-1,1).repeat(num_of_cells, 1) # x coords
+    vec2 = torch.zeros(0,1).int().to(device) # y coords
+    for num in arange:
+        vec2 = torch.cat((vec2, num.repeat(num_of_cells, 1).int()), 0)
+    vec1 = vec1.int()
+    indices = torch.cat((vec2, vec1), 1)
+    indices = indices.view(num_of_cells, num_of_cells, 2)
+
+    # For each part, find the center of the cells containing ones
+    for i in range(num_of_parts):
+        part = shape[i]
+        part = part.unsqueeze(2)
+
+        center = torch.mul(part, indices)
+        center = center.view(-1, 2)
+        center = torch.sum(center, dim=0)
+
+        num_of_ones = torch.sum(part.flatten())
+        if num_of_ones == 0:
+            #print("Deleted Part")
+            #return
+            raise Exception("Deleted Part")
+        center = center/num_of_ones
+        centers[i] = center
+
+    return centers
+

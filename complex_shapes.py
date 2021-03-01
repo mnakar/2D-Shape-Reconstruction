@@ -8,8 +8,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #                                               Set DB settings                                                    #
 ####################################################################################################################
 
+torch.manual_seed(42)
+
 # Create dataset:
-num_of_shapes = 50
+num_of_shapes = 20000
 part_types = {
     6: 1,
     4: 3,
@@ -17,9 +19,13 @@ part_types = {
     1: 3
 }
 
+part_num = 9
+
 ####################################################################################################################
 #                                               Construct shapes                                                   #
 ####################################################################################################################
+
+complex_shapes = torch.zeros(num_of_shapes, part_num, 9, 9, 9)
 
 # Construct part of length part_len :
 def construct_part(src_part, part_len):
@@ -43,7 +49,8 @@ def construct_part(src_part, part_len):
     return part
 
 
-
+#succ_shapes = 0
+#while succ_shapes != num_of_shapes:
 for s in range(num_of_shapes):
     while True:
         taken = set()
@@ -129,8 +136,13 @@ for s in range(num_of_shapes):
 
         s_voxel[part-1] = high_res_p_voxel
 
+    #union = s_voxel[0] + s_voxel[1] + s_voxel[2] + s_voxel[3] + s_voxel[4] > 1
+    #if len(union.nonzero()) == 0:
+    #torch.save(s_voxel, 'HighResShapes_9_9_9/{}_shape.pt'.format(s))
+        #succ_shapes += 1
+    complex_shapes[s] = s_voxel
+print("finished creating dataset")
 
-    torch.save(s_voxel, 'HighResShapes_9_9_9/{}_shape.pt'.format(s))
 
 
 
