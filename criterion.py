@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from dataset import num_of_parts, num_of_cells
 import math
+#from shape_features import Conv2DNet
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -38,23 +39,34 @@ class Dist_Loss(torch.nn.Module):
         dist_loss = dist_loss*100
         return dist_loss
 
+class Shape_Feature_Loss(torch.nn.Module):
+    def __init__(self):
+        super(Shape_Feature_Loss, self).__init__()
+        self.conv_net = Conv2DNet(num_of_cells, input_channel=num_of_parts, power=1)
+
+    def forward(self, reconst_3d_ev, ev_pred):
+        input_feat = self.conv_net(ev_pred.unsqueeze(0))
+        rec_feat = self.conv_net(reconst_3d_ev.unsqueeze(0))
+        return nn.MSELoss()(rec_feat, input_feat)
 
 class EV_Reconstruction_Loss(torch.nn.Module):
     def __init__(self):
         super(EV_Reconstruction_Loss, self).__init__()
 
-    def forward(self, ev_pred, reconst_3d_ev):
-        recons_loss = nn.L1Loss()(reconst_3d_ev, ev_pred)
-
+    def forward(self, ev_pred, reconst_3d_ev, ev_image, rec_image):
+        #recons_loss = nn.MSELoss()(reconst_3d_ev, ev_pred)
+        recons_loss = nn.L1Loss()(reconst_3d_ev, ev_pred) + nn.L1Loss()(torch.sum(rec_image), torch.sum(ev_image))
+        #+ 0.5*Shape_Feature_Loss()(reconst_3d_ev, ev_pred)
+        #+ nn.L1Loss()(torch.sum(torch.sum(reconst_3d_ev,1),1), torch.sum(torch.sum(ev_pred,1),1))
         return recons_loss
 
 class Explode_Loss(torch.nn.Module):
     def __init__(self):
         super(Explode_Loss, self).__init__()
 
-    def forward(self, X, reconst_3d_ev):
+    def forward(self, X, reconst_3d_ev, ev_image, rec_image):
 
-        recons_loss = EV_Reconstruction_Loss()(X, reconst_3d_ev)*100
+        recons_loss = EV_Reconstruction_Loss()(X, reconst_3d_ev, ev_image, rec_image)*100
 
         reg2 = 0
         dist_loss = 0.0

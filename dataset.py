@@ -7,7 +7,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 from complex_shapes import num_of_shapes, complex_shapes
 #num_of_shapes = 20000
-num_of_parts = 2
+num_of_parts = 5
 num_of_cells = 54
 batch_sz = 1
 
@@ -34,7 +34,7 @@ for i in range(num_of_shapes):
 
             shape_2d[j] = torch.max(shape[j], dim=0).values
 
-        union = shape[0] + shape[1] >1#+ shape[2] + shape[3] + shape[4] #+ shape[5] + shape[6] + shape[7] + shape[8] > 1
+        union = shape[0] + shape[1] + shape[2] + shape[3] + shape[4] >1#+ shape[5] + shape[6] + shape[7] + shape[8] > 1
         if len(union.nonzero()) != 0:
             no_intersection = False
             print("shape ", i, " intersection")

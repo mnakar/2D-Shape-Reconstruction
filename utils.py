@@ -118,7 +118,7 @@ class SaveRGB():
                   6: [255, 255, 0],  # Yellow
                   7: [0, 0, 0],  # Black
                   8: [128, 128, 128],  # Gray
-                  9: [255, 165, 0]  # Orange
+                  -1: [255, 165, 0]  # Orange
                   }
 
         rgb_image = np.zeros((num_of_cells, num_of_cells, 3))

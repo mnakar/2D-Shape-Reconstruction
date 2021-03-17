@@ -11,7 +11,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(42)
 
 # Create dataset:
-num_of_shapes = 20000
+num_of_shapes = 2500
 part_types = {
     6: 1,
     4: 3,
